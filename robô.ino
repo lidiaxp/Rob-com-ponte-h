@@ -1,84 +1,104 @@
- int optic = 10;                                                                                                                                                                                                                                                 long distancia;
-long tempo;
-int bswitch = 11;
-int estswitch = 0;
-int IN1 = 4;
-int IN2 = 5;
-int IN3 = 6;
-int IN4 = 7;
- 
+//coloco ou nao coloco o botao de desligar e ligar o robo?
+const byte optic = 3; //2 resistores de 10k e um d 300
+const byte IN1 = 4;
+const byte IN2 = 5;
+const byte IN3 = 6;
+const byte IN4 = 7;
+const byte echo = 8;
+const byte trig = 9;
+//----------------------------------------------------------
+long distancia;
+float tempo;
+int ligado = 0;
+//----------------------------------------------------------
 void setup() {
-  pinMode(IN1, OUTPUT);            //IN1 e IN2 são dos motores A, o qual está na esquerda
+  pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);            //IN3 e IN3 são dos motores B, o qual está na direita
+  pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-  pinMode(8, INPUT);               //pino 8 está ligado na entrada echo do sensor ultrassônico
-  pinMode(9, OUTPUT);              //pino 9 está ligado na entrada trlg do sensor ultrassônico    
+  pinMode(echo, INPUT);
+  pinMode(trig, OUTPUT);
   pinMode(optic, INPUT);
-  attachInterrupt(0, linha, FALLING);    //interrupção no pino2, quando o sinal alto virar baixo
+  attachInterrupt(1, linha, LOW); //porta 2 - chama sempre q for 0
+  delay(4000);
 }
- 
+//----------------------------------------------------------
 void loop() {
-  estswitch = digitalRead(bswitch);   
-  if (estswitch = HIGH) {            //liga e desliga o robô
-    delay(4000);                     //na maioria dos torneios os robôs tem que esperar em média 4 segundos para começar a se mexer
-    if (digitalRead(optic) == HIGH) {           //vê se tem alguma linha a frente
-      medirdistancia();                         //caso não tenha entra nesse loop
-      if (distancia <= 20) {                    //vê se o oponente está a 20cm ou menos de distância
-        frente();                               //se ele estiver, entra nesse loop
-        delay(100);
-      } else {
-        parar();                                //caso não esteja a 20cm ou menos, entra nesse loop
-        direita();
-        frente();
-      }
-    } 
+  medirdistancia();
+  if (distancia <= 25) {
+    frente(255);
+    delay(50);
+  } else {
+    direcao(120,100);
   }
 }
-
-void linha(){
-  tras();
-  esquerda();
+//----------------------------------------------------------
+void linha() {
+  tras(200);
+  esquerda(120);
 }
- 
+//----------------------------------------------------------
 void medirdistancia() {
-  digitalWrite(9, LOW);
+  digitalWrite(trig, LOW);
   delayMicroseconds(5);
-  digitalWrite(9, HIGH);
+  digitalWrite(trig, HIGH);
   delayMicroseconds(10);
-  tempo = pulseIn(8, HIGH);
-  distancia = int(0.017 * tempo);
+  tempo = pulseIn(echo, HIGH);
+  distancia = int(0.018 * tempo);
 }
- 
-void frente() {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+//----------------------------------------------------------
+void direcao(int velocidade, int duracao) {
+  long numero = rand(0, 30);
+  if (numero <= 10) {
+    esquerda(velocidade);
+    delay(duracao);
+    frente(velocidade);
+    delay(duracao*0,7);
+    parar();
+  }
+  if (numero > 10 && numero <= 20 ) {
+    direita(velocidade);
+    delay(duracao);
+    frente(velocidade);
+    delay(duracao*0,7);
+    parar();
+  }
+  else {
+    frente(velocidade);
+    delay(duracao);
+    parar();
+  }
 }
- 
-void tras() {
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
+//----------------------------------------------------------
+void tras(int velocidade) {
+  analogWrite(IN1, velocidade);
+  analogWrite(IN2, 0);
+  analogWrite(IN3, velocidade);
+  analogWrite(IN4, 0);
 }
- 
-void esquerda() {             //liga motor B e desliga motor A (considera-se que o motor A está na esquerda)
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, HIGH);
+//----------------------------------------------------------
+void frente(int velocidade) {
+  analogWrite(IN1, 0);
+  analogWrite(IN2, velocidade);
+  analogWrite(IN3, 0);
+  analogWrite(IN4, velocidade);
 }
- 
-void direita() {              //liga motor A e desliga motor B (considera-se que o motor A está na esquerda)
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, HIGH);
+//----------------------------------------------------------
+void direita(int velocidade) {
+  analogWrite(IN3, velocidade);
+  analogWrite(IN4, 0);
+  analogWrite(IN1, velocidade);
+  analogWrite(IN2, velocidade);
 }
- 
-void parar() {
+//----------------------------------------------------------
+void esquerda(int velocidade) {
+  analogWrite(IN1, velocidade);
+  analogWrite(IN2, 0);
+  analogWrite(IN3, velocidade);
+  analogWrite(IN4, velocidade);
+}
+//----------------------------------------------------------
+void parar() {       //ou tudo low
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
